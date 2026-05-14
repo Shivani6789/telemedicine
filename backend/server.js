@@ -9,19 +9,8 @@ connectDB();
 
 const app = express();
 
-// Allow Flutter web dev server (any localhost port) and Android emulator
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, native flutter, curl, etc.)
-    if (!origin) return callback(null, true);
-    
-    // Allow localhost, 127.0.0.1, and the current LAN IP
-    if (/^http:\/\/(localhost|127\.0\.0\.1|192\.168\.0\.216|172\.20\.10\.2|192\.168\.1\.6)(:\d+)?$/.test(origin)) {
-      return callback(null, true);
-    }
-    
-    callback(new Error(`CORS blocked: ${origin}`));
-  },
+  origin: '*', // Allow all origins for production deployment
   credentials: true,
 }));
 app.use(express.json());
