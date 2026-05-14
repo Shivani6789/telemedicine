@@ -80,14 +80,23 @@ class _OnlineConsultScreenState extends State<OnlineConsultScreen> {
           _status = 'Waiting for doctor to join...';
         });
       }
+    } catch (e) {
+      debugPrint('Camera/Mic error: $e');
+      if (mounted) {
+        setState(() => _status = 'Camera unavailable, joining anyway...');
+      }
+    }
 
+    try {
       // Create peer connection
       _peerConnection = await createPeerConnection(_rtcConfig);
 
-      // Add local tracks
-      _localStream!.getTracks().forEach((t) {
-        _peerConnection!.addTrack(t, _localStream!);
-      });
+      // Add local tracks if available
+      if (_localStream != null) {
+        _localStream!.getTracks().forEach((t) {
+          _peerConnection!.addTrack(t, _localStream!);
+        });
+      }
 
       // Remote track → render
       _peerConnection!.onTrack = (RTCTrackEvent event) {
@@ -114,7 +123,7 @@ class _OnlineConsultScreenState extends State<OnlineConsultScreen> {
       _connectSocket();
     } catch (e) {
       if (mounted) {
-        setState(() => _status = 'Camera/Mic error: $e');
+        setState(() => _status = 'WebRTC Error: $e');
       }
     }
   }

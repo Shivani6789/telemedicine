@@ -31,7 +31,7 @@ const bookOfflineAppointment = async (req, res) => {
         });
 
         // Auto-create Medical Record for this booking
-        const details = { bookedSlot: slot, date, status: 'pending', patientName, patientAge, patientGender };
+        const details = { appointmentId: appointment._id.toString(), bookedSlot: slot, date, status: 'pending', patientName, patientAge, patientGender };
         const encryptedData = encryptAES(details);
         await MedicalRecord.create({
             patientId,
@@ -88,7 +88,7 @@ const bookOnlineConsultation = async (req, res) => {
         await Doctor.findByIdAndUpdate(doctorId, { $inc: { todayConsultationCount: 1 } });
 
         // Create initial Medical Record — prescription will be linked later
-        const details = { status: 'pending', patientName, patientAge, patientGender };
+        const details = { appointmentId: appointment._id.toString(), status: 'pending', patientName, patientAge, patientGender };
         const encryptedData = encryptAES(details);
         await MedicalRecord.create({
             patientId,

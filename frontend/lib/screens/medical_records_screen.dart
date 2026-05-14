@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import 'pharmacy_search_screen.dart';
+import 'online_consult_screen.dart';
 
 class MedicalRecordsScreen extends StatefulWidget {
   const MedicalRecordsScreen({super.key});
@@ -370,6 +371,37 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen>
                     builder: (_) => PharmacySearchScreen(
                         initialMedicine: medicineNames.join(', ')),
                   ),
+                ),
+              ),
+            ],
+            if (r['status'] == 'pending' && category == 'Online Consultation' && r['appointmentId'] != null) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.video_call_rounded, size: 20),
+                  label: const Text('Join Video Call'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00897B),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OnlineConsultScreen(
+                          appointmentId: r['appointmentId'],
+                          doctorId: r['doctorId'] ?? '',
+                          doctorName: r['doctorName'] ?? 'Doctor',
+                          pName: r['patientName'] ?? 'Patient',
+                          pAge: r['patientAge'] ?? 0,
+                          pGender: r['patientGender'] ?? 'Other',
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
