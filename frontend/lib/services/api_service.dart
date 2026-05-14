@@ -4,15 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // Chrome (web): 'localhost'; Android emulator: '10.0.2.2'
-  // Physical device on same WiFi: replace with your PC's LAN IP
-  static String get baseUrl =>
-      kIsWeb ? "http://localhost:5000/api" : "http://192.168.1.6:5000/api";
+  // Production Render URL
+  static String get baseUrl => "https://telemedicine-1lu7.onrender.com/api";
 
-  // Platform-aware socket URL:
-  // Web (Chrome) → localhost | Android emulator → 10.0.2.2
-  static String get socketUrl =>
-      kIsWeb ? 'http://localhost:5000' : 'http://192.168.1.6:5000';
+  // Production Render Socket URL
+  static String get socketUrl => "https://telemedicine-1lu7.onrender.com";
 
   // ── Helpers ────────────────────────────────────────────────────
 
