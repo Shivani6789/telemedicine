@@ -67,7 +67,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   void _showBookingOptions(BuildContext context, dynamic doc, DataProvider data) {
     showModalBottomSheet(
       context: context,
-      builder: (context) {
+      builder: (sheetContext) {
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -81,7 +81,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   label: const Text('Consult Now (Online)'),
                   style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
                   onPressed: () {
-                    Navigator.pop(context); // Close bottom sheet
+                    Navigator.pop(sheetContext); // Close bottom sheet
                     _initiateBookingProcess(context, doc, data, isOnline: true);
                   },
                 ),
@@ -91,7 +91,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                 label: const Text('Book Offline Clinic Visit'),
                 style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pop(sheetContext);
                   _showOfflineSlots(context, doc, data);
                 },
               )
@@ -107,7 +107,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
 
     showModalBottomSheet(
       context: context,
-      builder: (context) {
+      builder: (sheetContext) {
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: dates.isEmpty ? const Center(child: Text("No offline slots available")) : ListView.builder(
@@ -123,7 +123,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                     trailing: ElevatedButton(
                       child: const Text('Book'),
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pop(sheetContext);
                         _initiateBookingProcess(context, doc, data, isOnline: false, date: dateObj['date'], slot: slot);
                       },
                     ),
@@ -137,9 +137,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     );
   }
 
-  void _initiateBookingProcess(BuildContext context, dynamic doc, DataProvider data, {required bool isOnline, String? date, String? slot}) {
+  void _initiateBookingProcess(BuildContext parentContext, dynamic doc, DataProvider data, {required bool isOnline, String? date, String? slot}) {
     // 1. Ask for patient details
-    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final auth = Provider.of<AuthProvider>(parentContext, listen: false);
     
     bool isOtherPerson = false;
     TextEditingController nameCtrl = TextEditingController(text: auth.name);
@@ -147,11 +147,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     String gender = 'Male';
 
     showDialog(
-      context: context,
+      context: parentContext,
       barrierDismissible: false,
-      builder: (context) {
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (stateContext, setState) {
             return AlertDialog(
               title: const Text('Patient Details'),
               content: SingleChildScrollView(
@@ -198,27 +198,27 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
                 ElevatedButton(
                   onPressed: () async {
                     if (nameCtrl.text.isEmpty || ageCtrl.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
+                      ScaffoldMessenger.of(stateContext).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
                       return;
                     }
 
                     int age = int.tryParse(ageCtrl.text) ?? 0;
-                    Navigator.pop(context);
+                    Navigator.pop(dialogContext); // Close Patient Details dialog
 
                     if (isOnline) {
                       // Show loading while booking
-                      showDialog(context: context, barrierDismissible: false,
+                      showDialog(context: parentContext, barrierDismissible: false,
                           builder: (_) => const Center(child: CircularProgressIndicator()));
                       try {
                         final res = await data.bookOnline(doc['_id'], nameCtrl.text, age, gender);
-                        if (context.mounted) Navigator.pop(context); // close loading
+                        if (parentContext.mounted) Navigator.pop(parentContext); // close loading
                         if (res.containsKey('_id')) {
-                          if (context.mounted) {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => OnlineConsultScreen(
+                          if (parentContext.mounted) {
+                            Navigator.push(parentContext, MaterialPageRoute(builder: (_) => OnlineConsultScreen(
                               appointmentId: res['_id'],
                               doctorId: doc['_id'],
                               doctorName: doc['name'],
@@ -228,20 +228,20 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                             )));
                           }
                         } else {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                          if (parentContext.mounted) {
+                            ScaffoldMessenger.of(parentContext).showSnackBar(
                               SnackBar(content: Text(res['message'] ?? 'Booking failed'), backgroundColor: Colors.red));
                           }
                         }
                       } catch (e) {
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
+                        if (parentContext.mounted) {
+                          Navigator.pop(parentContext);
+                          ScaffoldMessenger.of(parentContext).showSnackBar(
                             SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
                         }
                       }
                     } else {
-                      _processOfflineBooking(context, doc, data, date!, slot!, nameCtrl.text, age, gender);
+                      _processOfflineBooking(parentContext, doc, data, date!, slot!, nameCtrl.text, age, gender);
                     }
                   },
                   child: const Text('Confirm Booking'),
