@@ -56,9 +56,9 @@ const bookOnlineConsultation = async (req, res) => {
 
         const doctor = await Doctor.findById(doctorId);
         if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
-        if (!doctor.availableNow) {
-            return res.status(400).json({ message: 'Doctor is not available for online consultation right now.' });
-        }
+        // if (!doctor.availableNow) {
+        //     return res.status(400).json({ message: 'Doctor is not available for online consultation right now.' });
+        // }
 
         // Feature 2: Doctor Scalability & Queue Limits
         // Prevent overload by limiting the number of ACTIVE/PENDING patients waiting in the queue
