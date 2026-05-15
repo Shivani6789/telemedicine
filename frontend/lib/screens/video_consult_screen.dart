@@ -42,6 +42,9 @@ class _VideoConsultScreenState extends State<VideoConsultScreen> {
   bool _camOff = false;
   String _status = 'Starting camera...';
 
+  final List<RTCIceCandidate> _remoteCandidates = [];
+  bool _isRemoteDescriptionSet = false;
+
   // Feature 4: Enhanced Video UX (Timer & Call in Progress)
   Timer? _timer;
   int _secondsElapsed = 0;
@@ -138,6 +141,13 @@ class _VideoConsultScreenState extends State<VideoConsultScreen> {
       if (mounted) setState(() => _status = 'Answering call...');
       final sdp = RTCSessionDescription(data['sdp']['sdp'], data['sdp']['type']);
       await _peerConnection?.setRemoteDescription(sdp);
+      
+      _isRemoteDescriptionSet = true;
+      for (var candidate in _remoteCandidates) {
+        await _peerConnection?.addCandidate(candidate);
+      }
+      _remoteCandidates.clear();
+
       final answer = await _peerConnection!.createAnswer();
       await _peerConnection!.setLocalDescription(answer);
       _socket.emit('answer', {
@@ -149,9 +159,12 @@ class _VideoConsultScreenState extends State<VideoConsultScreen> {
     _socket.on('ice-candidate', (data) async {
       if (data['candidate'] != null) {
         final c = data['candidate'];
-        await _peerConnection?.addCandidate(
-          RTCIceCandidate(c['candidate'], c['sdpMid'], c['sdpMLineIndex']),
-        );
+        final candidate = RTCIceCandidate(c['candidate'], c['sdpMid'], c['sdpMLineIndex']);
+        if (_isRemoteDescriptionSet) {
+          await _peerConnection?.addCandidate(candidate);
+        } else {
+          _remoteCandidates.add(candidate);
+        }
       }
     });
 
