@@ -154,14 +154,18 @@ class _OnlineConsultScreenState extends State<OnlineConsultScreen> {
 
     // Doctor sent answer → set remote description
     _socket.on('answer', (data) async {
-      final sdp = RTCSessionDescription(data['sdp']['sdp'], data['sdp']['type']);
-      await _peerConnection?.setRemoteDescription(sdp);
-      
-      _isRemoteDescriptionSet = true;
-      for (var candidate in _remoteCandidates) {
-        await _peerConnection?.addCandidate(candidate);
+      try {
+        final sdp = RTCSessionDescription(data['sdp']['sdp'], data['sdp']['type']);
+        await _peerConnection?.setRemoteDescription(sdp);
+        
+        _isRemoteDescriptionSet = true;
+        for (var candidate in _remoteCandidates) {
+          await _peerConnection?.addCandidate(candidate);
+        }
+        _remoteCandidates.clear();
+      } catch (e) {
+        debugPrint('Error handling answer: $e');
       }
-      _remoteCandidates.clear();
     });
 
     // ICE candidates from doctor
@@ -189,12 +193,18 @@ class _OnlineConsultScreenState extends State<OnlineConsultScreen> {
   }
 
   Future<void> _createAndSendOffer() async {
-    final offer = await _peerConnection!.createOffer({'offerToReceiveVideo': 1});
-    await _peerConnection!.setLocalDescription(offer);
-    _socket.emit('offer', {
-      'roomId': widget.appointmentId,
-      'sdp': offer.toMap(),
-    });
+    _isRemoteDescriptionSet = false;
+    _remoteCandidates.clear();
+    try {
+      final offer = await _peerConnection!.createOffer({'offerToReceiveVideo': 1});
+      await _peerConnection!.setLocalDescription(offer);
+      _socket.emit('offer', {
+        'roomId': widget.appointmentId,
+        'sdp': offer.toMap(),
+      });
+    } catch (e) {
+      debugPrint('Error creating offer: $e');
+    }
   }
 
   // ───────────────────────── Controls ─────────────────────────────

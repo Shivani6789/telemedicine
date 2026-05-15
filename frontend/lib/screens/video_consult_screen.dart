@@ -138,22 +138,28 @@ class _VideoConsultScreenState extends State<VideoConsultScreen> {
 
     // Patient sends offer → doctor creates answer
     _socket.on('offer', (data) async {
+      _isRemoteDescriptionSet = false; // Reset for new offer
       if (mounted) setState(() => _status = 'Answering call...');
-      final sdp = RTCSessionDescription(data['sdp']['sdp'], data['sdp']['type']);
-      await _peerConnection?.setRemoteDescription(sdp);
       
-      _isRemoteDescriptionSet = true;
-      for (var candidate in _remoteCandidates) {
-        await _peerConnection?.addCandidate(candidate);
-      }
-      _remoteCandidates.clear();
+      try {
+        final sdp = RTCSessionDescription(data['sdp']['sdp'], data['sdp']['type']);
+        await _peerConnection?.setRemoteDescription(sdp);
+        
+        _isRemoteDescriptionSet = true;
+        for (var candidate in _remoteCandidates) {
+          await _peerConnection?.addCandidate(candidate);
+        }
+        _remoteCandidates.clear();
 
-      final answer = await _peerConnection!.createAnswer();
-      await _peerConnection!.setLocalDescription(answer);
-      _socket.emit('answer', {
-        'roomId': widget.appointmentId,
-        'sdp': answer.toMap(),
-      });
+        final answer = await _peerConnection!.createAnswer();
+        await _peerConnection!.setLocalDescription(answer);
+        _socket.emit('answer', {
+          'roomId': widget.appointmentId,
+          'sdp': answer.toMap(),
+        });
+      } catch (e) {
+        debugPrint('Error handling offer: $e');
+      }
     });
 
     _socket.on('ice-candidate', (data) async {
