@@ -68,11 +68,11 @@ const bookOnlineConsultation = async (req, res) => {
             status: 'pending'
         });
 
-        if (activeQueueCount >= 5) {
-            return res.status(429).json({
-                message: `Dr. ${doctor.name}'s active queue is currently full. Please wait a few minutes or try another doctor.`
-            });
-        }
+        // if (activeQueueCount >= 5) {
+        //     return res.status(429).json({
+        //         message: `Dr. ${doctor.name}'s active queue is currently full. Please wait a few minutes or try another doctor.`
+        //     });
+        // }
 
         const appointment = await Appointment.create({
             patientId,
